@@ -1,0 +1,1128 @@
+MySql
+
+username : root
+password : root
+localhost:3306
+
+--connect to mysql--
+
+mysql -u root -p
+root
+
+mysql -u root -h localhost -p
+root
+
+CREATE DATABASE kundandb;
+
+use kundandb;
+
+create table emptable ( sno INT, name VARCHAR(180) NOT NULL, gender VARCHAR(20) NOT NULL);
+create table address ( id INT PRIMARY KEY, addname VARCHAR(180) NOT NULL, city VARCHAR(20) NOT NULL);
+insert into emptable (1,"raj","Male");
+alter table emptable add column `id` int(10) unsigned primary KEY AUTO_INCREMENT;
+
+create table address ( addressid INT, addname VARCHAR(180) NOT NULL, city VARCHAR(20) NOT NULL);
+alter table address add column `id` int(10) unsigned primary KEY AUTO_INCREMENT;
+insert into address (addressid,addname,city,id) values (1,'s4 street','madurai',null);
+insert into address (addressid,addname,city,id) values(2,"rain street","chennai",null);
+insert into address (addressid,addname,city,id) values(3,"summar street","delhi",null);
+insert into address (addressid,addname,city,id) values(4,"wine street","banglore",null);
+insert into address (addressid,addname,city,id) values(5,"mobile street","noida",null);
+insert into address (addressid,addname,city,id) values(6,"kachara street","some city",null);
+
+if auto increement is set, then to insert give "null" as the column value.
+INSERT INTO emptable values (13,'ajith','k',null)
+
+INSERT INTO emptable values (113,'loosu',null,null);
+INSERT INTO emptable values (131,'pakki',null,null);
+INSERT INTO emptable values (145,'thum',null,null);
+
+#Add index
+ALTER TABLE emptable ADD INDEX (sno);
+
+-- TO create NO PK table --
+create table temp_nopk as select * from emptable;
+
+Sqoop
+
+/usr/local/sqoop*
+user : hduser
+password : hduser
+
+mysql-connector placed in /usr/local/sqoop**/lib/*
+Exported Hadoop home and Hadoop mapred path in /usr/local/sqoop**/coonf/spark-env.sh/
+
+
+Sqoop commands
+
+----- To list databases -----
+sqoop list-databases \
+  --connect "jdbc:mysql://localhost:3306" \
+  --username root \
+  --password root
+
+----- Impport from mysql database to HDFS -----
+sqoop import \
+  --connect "jdbc:mysql://localhost:3306/kundandb" \
+  --username=root \
+  --password=root \
+  --table emptable \
+  --target-dir=/sqoop/emptable_1
+
+----- list table -----
+sqoop list-tables \
+  --connect jdbc:mysql://localhost:3306/kundandb \
+  --username root \
+  --password root
+
+----- query using sqoop eval -----
+sqoop-eval \
+  --connect "jdbc:mysql://localhost:3306" \
+  --username root \
+  --password root \
+  --query "select * from kundandb.emptable"
+  OR WE CAN
+  --query "select * from emptable"
+  OR WE CAN
+  --query "INSERT INTO emptable values (13,'ajith','k',null)"
+
+
+-- create table ----
+sqoop-eval \
+  --connect "jdbc:mysql://localhost:3306"/kundandb \
+  --username root \
+  --password root \
+  --query "CREATE TABLE dummy (i INT)"
+
+-- Insert values ---
+sqoop-eval \
+  --connect "jdbc:mysql://localhost:3306"/kundandb \
+  --username root \
+  --password root \
+  --query "INSERT INTO dummy VALUES (1)"
+
+sqoop-eval \
+  --connect "jdbc:mysql://localhost:3306"/kundandb \
+  --username root \
+  --password root \
+  --query "SELECT * FROM dummy"
+
+-- Sqoop Import ---
+
+sqoop import \
+  --connect "jdbc:mysql://localhost:3306/kundandb" \
+  --username root \
+  --password root \
+  --table emptable \
+  --target-dir /sqoop/test_1
+
+sqoop import
+--connect "jdbc:mysql://localhost:3306/kundandb"
+--username root
+--password root
+--table emptable
+--warehouse-dir /sqoop/warehouse
+
+--target-dir will create part files in the specified path
+--warehouse-dir will creata a folder with name of the table on the specified path
+
+BY DEFAULT, sql rows will be delimited by comma by sqoop
+
+
+Execution Life Cycle:---
+Here is the execution life cycle of Sqoop.
+Connect to source database and get metadata
+Generate java file with metadata and compile to jar file
+Apply boundaryvalsquery to apply split logic, default 4
+Use split boundaries to issue queries against source database
+Each thread will have different connection to issue the query
+Each thread will get mutually exclusive sub set of the data
+Data will be written to HDFS in a separate file per thread
+
+--Customize mappers ---
+
+By default the number of input splits is 4.
+Hence 4 mappers will be running.To customize number of splits or number of mappers,
+we can set --num-mappers to 1
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_3/ \
+ --num-mappers 1
+
+Managing Directories
+By default sqoop import fails if target directory already exists
+Directory can be overwritten by using –delete-target-dir
+Data can be appended to existing directories by saying –append
+
+--delet target directory for every run--
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_3/ \
+ --num-mappers 1 \
+ --delete-target-dir
+
+
+--append to the existing directory---
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_3/ \
+ --num-mappers 1 \
+ --append
+
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_3/ \
+ --append
+
+
+----Customizing split logic ---
+
+By default number of mappers is 4, it can be changed with –num-mappers
+Split logic will be applied on primary key, if exists
+
+If primary key does not exists and if we use number of mappers more than 1, then sqoop import will fail
+
+So we are creating a table with no primary key and we will run sqoop import with default splis (which is 4)
+
+TO create no pk table , 
+create table temp_nopk as select * from emptable;
+
+-- Without mentioning --num-mappers--
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --delete-target-dir
+
+When running above command ,we will get below error.
+
+Import failed: No primary key could be found for table temp_nopk. Please specify one with --split-by or perform a sequential import with '-m 1'.
+
+-- Now with --num-mappers
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --num-mappers 1 \
+ --delete-target-dir
+
+
+To avoid import failure in this case,we can use --split-by option
+
+#Things to remember for split-by
+Column should be indexed.Else whole table will be scanned which is a costlier operation.
+Value in the field should be sparse
+Value in the field should be sequence generated or evenly increemented
+It should not have null values
+It need not be unique
+
+For performance reason choose a column which is indexed as part of split-by clause
+If there are null values in the column, corresponding records from the table will be ignored
+Data in the split-by column need not be unique, but if there are duplicates then there can be skew in the data while importing (which means some files might be relatively bigger compared to other files)
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --split-by id \
+ --delete-target-dir
+
+
+skewed????
+
+How to spilt by used on fied which is string or text.
+Let us see now with below command
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --split-by name \
+ --delete-target-dir
+
+We will get below error.
+
+Import failed: java.io.IOException: Generating splits for a textual index column allowed only in case of "-Dorg.apache.sqoop.splitter.allow_text_splitter=true" property passed as a parameter
+
+To overcome this error,add "-Dorg.apache.sqoop.splitter.allow_text_splitter=true" to the import command on the top
+
+sqoop import \
+ -Dorg.apache.sqoop.splitter.allow_text_splitter=true \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --split-by name \
+ --delete-target-dir
+
+*** BUt there will be a side effect of text split,which needs to checked in the internet
+
+
+Auto reset to one mapper when no primary key is available..This can be added in the import command and it will check if the table has the primary key,if not it will set the mapped to 1.
+
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table temp_nopk \
+ --warehouse-dir /sqoop/nopk_1/ \
+ --autoreset-to-one-mapper \
+ --delete-target-dir
+
+This will run the command with one mapper since no primary key is available.
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_5/ \
+ --autoreset-to-one-mapper \
+ --delete-target-dir
+
+This will run 4 mappers because primary key is available.Hence the autoreset property will not be applied.
+
+**** File Formats *********
+
+
+By Default,sqoop import writes the data in text file.No need to specify text file format in the command.It comes by default
+
+Other file formats,
+
+text file (default)
+sequence file (binary file format)
+avro (binary json format)
+parquet (
+columnar file format)
+orc
+
+-- File format -> --as-sequence
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_6/ \
+ --as-sequencefile \
+ --delete-target-dir
+
+-- File format -> --as-parquetfile
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_parq/ \
+ --as-parquetfile \
+ --delete-target-dir
+
+-- File format -> --as-avrodatafile
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_avro/ \
+ --as-avrodatafile \
+ --delete-target-dir
+
+
+Avrodatafile is not working...Need to check
+
+
+
+*** Compression ***
+
+Buy default ,compression is diabled.
+
+It can be enabled using --compress in the import command.And by default gzip algorithm is the compression-codec
+Compression can be applied for any file format.
+
+  --compression-codec org.apache.hadoop.io.compress.GzipCodec
+
+  --compression-codec org.apache.hadoop.io.compress.SnappyCodec
+
+-- Default is Gzip -- 
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_6/ \
+ --as-textfile \
+ --compress \
+ --delete-target-dir
+
+--GzipCodec--
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_6/ \
+ --as-textfile \
+ --compress \
+--compression-codec org.apache.hadoop.io.compress.GzipCodec \
+ --delete-target-dir
+
+--SnappyCodec--
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/temp_6/ \
+ --as-textfile \
+ --compress \
+--compression-codec org.apache.hadoop.io.compress.SnappyCodec \
+ --delete-target-dir
+
+Note : Go to /etc/hadoop/conf and check core-site.xml for supported compression codecs
+
+
+***** Boundary query *****
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --boundary-query "select min(sno),max(sno) from emptable"
+
+--- Primary key in the boundary query ---
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --boundary-query "select min(id),max(id) from emptable where id>=4"
+
+---Giving another column as boundary query ----
+** But this is not working
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --boundary-query "select min(sno),max(sno) from emptable where sno>=4"
+
+--Even if i create an index it is not working.
+
+-- To hardcode range --- 
+*** This range is applied only primary key
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --boundary-query "select 4,7"
+
+
+***** Transformation and filtering *****
+
+** Only table and/or column can be used together -- is mutualy exclusive with query.
+** query can be used only
+
+-- IF I want only particular columns to be imported then we can use --column ---
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --columns name,id \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir 
+
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --columns name,id \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --num-mappers 1
+
+If I want to join tables or if i want to have many joins,we need use --query because we cannot mention both table names in --table.
+
+Join query : select * from emptable t,address a where t.id = a.addressid;
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --num-mappers 1 \
+ --query "select * from emptable t,address a where t.id = a.addressid
+
+** The above command will throw error becuase if we use query we cannot give warehouse-dir ,bcoz we are joining two tables and warehouse dir will have to create a folder with the table name.Since we are using joining it is not possible to create a folder with table name.
+
+Please set $ZOOKEEPER_HOME to the root of your Zookeeper installation.
+18/07/06 07:59:02 INFO sqoop.Sqoop: Running Sqoop version: 1.4.7
+18/07/06 07:59:02 WARN tool.BaseSqoopTool: Setting your password on the command-line is insecure. Consider using -P instead.
+Must specify destination with --target-dir. 
+Try --help for usage instructions.
+
+
+Hence in this case we need to use --target-dir
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --num-mappers 1 \
+ --query "select * from emptable t,address a where t.id = a.addressid
+
+** this command will again throw an error as below
+
+8/07/06 08:01:15 INFO manager.MySQLManager: Preparing to use a MySQL streaming resultset.
+18/07/06 08:01:15 INFO tool.CodeGenTool: Beginning code generation
+18/07/06 08:01:15 ERROR tool.ImportTool: Import failed: java.io.IOException: Query [select * from emptable t,address a where t.id = a.addressid] must contain '$CONDITIONS' in WHERE clause.
+	at org.apache.sqoop.manager.ConnManager.getColumnTypes(ConnManager.java:332)
+	at org.apache.sqoop.orm.ClassWriter.getColumnTypes(ClassWriter.java:1872)
+
+** So if we are using --query ,we need add $CONDITIONS. This is need for sqoop to run and doesnot mean any logic to us.It is internal stuff
+
+So,
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --num-mappers 1 \
+ --query "select t.id,t.name,t.gender,a.addname,a.city from emptable t,address a where t.id = a.addressid and \$CONDITIONS"
+
+The above command works will give a result with a join.Pleas note,we are using --num-mappers as 1.So no issue.
+
+However if we remove and run the command.
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --query "select t.id,t.name,t.gender,a.addname,a.city from emptable t,address a where t.id = a.addressid and \$CONDITIONS"
+
+We will get below error,
+
+Please set $ZOOKEEPER_HOME to the root of your Zookeeper installation.
+18/07/06 08:16:42 INFO sqoop.Sqoop: Running Sqoop version: 1.4.7
+18/07/06 08:16:42 WARN tool.BaseSqoopTool: Setting your password on the command-line is insecure. Consider using -P instead.
+When importing query results in parallel, you must specify --split-by.
+Try --help for usage instructions.
+
+So,add --split-by to tell sqoop to know the primary key to be used for splits
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --query "select t.id,t.name,t.gender,a.addname,a.city from emptable t,address a where t.id = a.addressid and \$CONDITIONS" \
+ --split-by t.id
+
+Please note in the above command, we cannot give the column name as "id" in --split-by instaed we need to give t.id.
+
+Else let us try with allias as below,
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --query "select t.id as id,t.name,t.gender,a.addname,a.city from emptable t,address a where t.id = a.addressid and \$CONDITIONS" \
+ --split-by id
+
+It is still throwin error with even alias.So we need to give t.id
+
+#table and/or columns are mutualy exclusive
+Either you can only table
+Either you can have both table and column
+Either you can only have query
+
+For --query, --split-by is mandatory if num-mappers is greated than 1.
+#quert should have have a placeholder for \$CONDITIONS with backward slash
+
+
+**** Delimiters and handling nulls ******
+
+
+Added few null values to gender column in emptable
+
+Run a simple sqoop command
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir
+
+Out put is,
+
+1,raj,Male,1
+1,sekar,Male,2
+1,siva,female,3
+1,trisha,female,4
+10,nayan,female,5
+13,ajith,k,6
+13,ajith,k,7
+19,jason,st,8
+113,loosu,null,9
+131,pakki,null,10
+145,thum,null,11
+
+
+By default,delimiter is comma(,) and new line character at end.
+
+Suppose we have null values in our mysql table and if we import the same through sqoop to hdfs.We will have null values in the hdfs as above.
+
+Sometimes we need to set null values to some default data.In this case we can use below command.
+--null-string <null-string>	The string to be written for a null value for string columns
+--null-non-string <null-string>	The string to be written for a null value for non-string columns
+
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --null-string unknown
+
+
+On running the above command we will get below output.
+
+1,raj,Male,1
+1,sekar,Male,2
+1,siva,female,3
+1,trisha,female,4
+10,nayan,female,5
+13,ajith,k,6
+13,ajith,k,7
+19,jason,st,8
+113,loosu,unknown,9
+131,pakki,unknown,10
+145,thum,unknown,11
+
+
+null values are replaced by unknown
+
+Below are 6 different delimiter we can use.
+
+Argument	Description
+--enclosed-by <char>	Sets a required field enclosing character
+--escaped-by <char>	Sets the escape character
+--fields-terminated-by <char>	Sets the field separator character
+--lines-terminated-by <char>	Sets the end-of-line character
+--mysql-delimiters	Uses MySQL’s default delimiter set: fields: , lines: \n escaped-by: \ optionally-enclosed-by: '
+--optionally-enclosed-by <char>	Sets a field enclosing character
+
+
+Suppose if I need to change the field delimiter to "tab" .BY default is "comma"
+
+Suppose if I need to change the lines terminated to ":" .BY default is "new line"
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --null-string unknown \
+ --fields-terminated-by "\t" \
+ --lines-terminated-by  ":"
+
+So the output is
+
+1	raj	Male	1:1	sekar	Male	2:1	siva	female	3:1	trisha	female	4:10	nayan	female	5:13	ajith	k	6:13	ajith	k	7:19	jason	st	8:113	loosu	unknown	9:131	pakki	unknown	10:145	thum	unknown	11:
+
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --warehouse-dir /sqoop/test_13/ \
+ --delete-target-dir \
+ --null-string unknown \
+ --fields-terminated-by "\000" \
+ --lines-terminated-by  ":"
+
+
+********** Incremental load ******
+Incremental loads can be performed using
+
+query
+where
+Standard incremental loads
+
+
+First we need to take a base import and then we can import incrementally.
+
+#Base import
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_14/ \
+ --num-mappers 2 \
+ --query "select * from emptable where \$CONDITIONS and created_date like '2013-%'" \
+ --split-by id
+
+Output is ,
+1,raj,Male,1,2013-01-01
+1,sekar,Male,2,2013-05-01
+
+Because we have given created_date like '2013-%' so it fetched only 2013 dates/
+
+Now to do the incremental loads,we can now changed the date in the condition and use --append
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_14/ \
+ --num-mappers 2 \
+ --query "select * from emptable where \$CONDITIONS and created_date like '2014-01-%'" \
+ --split-by id \
+ --append
+
+Output is,
+
+1,raj,Male,1,2013-01-01
+1,sekar,Male,2,2013-05-01
+1,siva,female,3,2014-01-01
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_14/ \
+ --num-mappers 2 \
+ --query "select * from emptable where \$CONDITIONS and created_date like '2014-04-%'" \
+ --split-by id \
+ --append
+ 
+ Output is,
+ 
+1,raj,Male,1,2013-01-01
+1,sekar,Male,2,2013-05-01
+1,siva,female,3,2014-01-01
+1,trisha,female,4,2014-04-01
+
+Another way of giving where clause is as below,Instead of --query we can use --table with --where clause
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_14/ \
+ --num-mappers 2 \
+ --table emptable \
+ --where "created_date like '2014-05-%'" \
+ --append
+ 
+ Output is,
+ 
+1,raj,Male,1,2013-01-01
+1,sekar,Male,2,2013-05-01
+1,siva,female,3,2014-01-01
+1,trisha,female,4,2014-04-01
+10,nayan,female,5,2014-05-01
+13,ajith,k,6,2014-05-06
+
+**** # Incremental load using arguments specific to incremental load
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --target-dir /sqoop/test_14/ \
+ --num-mappers 2 \
+ --table emptable \
+ --check-column created_date \
+ --incremental append \
+ --last-value '2014-05-06'
+
+This will print below,
+
+ollowing arguments:
+18/07/07 10:12:50 INFO tool.ImportTool:  --incremental append
+18/07/07 10:12:50 INFO tool.ImportTool:   --check-column created_date
+18/07/07 10:12:50 INFO tool.ImportTool:   --last-value 2014-11-06
+18/07/07 10:12:50 INFO tool.ImportTool: (Consider saving this with 'sqoop job --create')
+
+
+Output is,
+
+1,raj,Male,1,2013-01-01
+1,sekar,Male,2,2013-05-01
+1,siva,female,3,2014-01-01
+1,trisha,female,4,2014-04-01
+10,nayan,female,5,2014-05-01
+13,ajith,k,6,2014-05-06
+13,ajith,k,7,2014-07-06
+19,jason,st,8,2014-08-06
+113,loosu,null,9,2014-09-06
+131,pakki,null,10,2014-10-06
+145,thum,null,11,2014-11-06
+
+
+***** Hive import ****
+
+--hive-import
+--hive-database  -> hive database name
+--hive table -> hive tablename
+
+BY default the sqoop delimeter is (,)
+BY default the hive delimeter is (^A) ctrl+A
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --hive-import \
+ --hive-database hduser_sqoop_import \
+ --hive-table emptable_hive/ \
+ --num-mappers 2
+ 
+ Once the above command is run,we can see a folder with databasename/table name/Part file  will be created in the below path
+ 
+ /user/hive/warehouse/hduser_sqoop_import/emptable_hive/00000
+
+Pleaset note,sqoop first put the data in hdfs directory of /user/hduser/emptable and from there it is moved to hive table
+
+**  Managing Tables ****
+
+#IF we run the same above sqoop import once again, the data will be appended.
+#So by default it will be appended.
+If we can to ovewrite we need to add below command
+--hive-overwrite
+
+It will drop and recreate the table and load the data again.
+
+sqoop import \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --table emptable \
+ --hive-import \
+ --hive-database hduser_sqoop_import \
+ --hive-table emptable_hive/ \
+ --hive-overwrite \
+ --num-mappers 2
+
+
+If we want to throw an error if a table is already present,then use the below control argument.
+
+--create-hive-table will fail hive import, if table already exists
+
+the error will be thrown at the last step before hive import.but the data will be in staging directory. this is an issue with sqoop.
+
+so we need to manually delete it.
+
+
+
+
+***** Import all table *****
+
+use Warehouse-dir ,since it will create sub directory with table names.
+
+sqoop import-all-tables \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --warehouse-dir /sqoop/alltables/ \
+ --delete-target-dir 
+
+Note: If there are any tables with no primary key,then we cannot have more than one mappers or we cannot use the deafult splits.It will fail in mid way.
+Ley us test it that way first.
+
+Each table must have a single-column primary key.
+You must intend to import all columns of each table.
+You must not intend to use non-default splitting column, nor impose any conditions via a WHERE clause.
+No incremental load is possible
+
+We get error as below,
+
+18/07/07 19:30:56 ERROR tool.BaseSqoopTool: Error parsing arguments for import-all-tables:
+18/07/07 19:30:56 ERROR tool.BaseSqoopTool: Unrecognized argument: --delete-target-dir
+
+So for --import-all-tables,we canno use --delete-target-dir and few others listed below,
+--table, --split-by, --columns, and --where 
+
+So, let us run now,
+
+sqoop import-all-tables \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --warehouse-dir /sqoop/alltables/
+
+
+Note: Recompile with -Xlint:deprecation for details.
+18/07/07 19:36:17 INFO orm.CompilationManager: Writing jar file: /tmp/sqoop-hduser/compile/20a4ac617bb7f2680c617173c408ea19/COMPLETED_TXN_COMPONENTS.jar
+18/07/07 19:36:17 ERROR tool.ImportAllTablesTool: Error during import: No primary key could be found for table COMPLETED_TXN_COMPONENTS. Please specify one with --split-by or perform a sequential import with '-m 1'.
+
+
+
+Since one of the table doesnt have primary key, we are getting above error.
+
+Hence we have to set --auto-reset-to-one-mapper
+So,
+
+ sqoop import-all-tables \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --warehouse-dir /sqoop/alltables/ \
+ --autoreset-to-one-mapper
+
+sqoop list-tables \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root
+
+
+
+
+
+*********** Sqoop Export *******
+
+
+Sqoop export always uses HDFS.It doesnt know hive or anything else..It always reads the HDFS for importing into mysql.
+
+Having said that,If we create a table with several joins in hive.We can verify the hdfs localtion of the table by querying describe-formatted- which will list the hdfs location.
+
+That location has to be given in the export command.
+
+Simple Export with delimiter
+
+#I am creating a table in hive.and by  "describe formatted temphive".We will get the hdfs location.
+hdfs://localhost:54310/user/hive/warehouse/temphivetable.db/temphive
+
+#Before running the command,we need to create a table in mysql.bcoz sqoop export will not create a table dynamically like import.
+We need to create it explicitly.
+
+#It should have same number of columns but can different names.
+create table tempmysql_hive (sno int,myid int,firstname varchar(30),gender varchar(30));
+
+#We need to consider delimiter also.Because in hive the column is delimited by ctrl+A assci 1.But sqoop will expect to be (,).So we need to pass an control argument so that sqoop export can understand the delimiter.
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive \
+ --input-fields-terminated-by "\001"
+
+The above command has inserted from hdfs to mysql
+
+what if i run this command again?
+
+It has appended to the mysql .BUt there was no primary key present in the mysql.So what will happen if i insert the same record to the mysql table.Need to check.
+
+
+** num of mappers in export
+
+It is purely depends on hadoop fs block size concept.Number of splits are based on block size
+
+But still we can mention --num-mappers
+
+
+*** COlumns
+
+Create another table by exchanging the columns as below.
+create table tempmysql_hive_demo (firstname varchar(30),gender varchar(30),sno int,myid int);
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive_demo \
+ --input-fields-terminated-by "\001"
+
+
+It failed,
+
+18/07/07 21:36:20 ERROR tool.ExportTool: Error during export: 
+Export job failed!
+	at org.apache.sqoop.mapreduce.ExportJobBase.runExport(ExportJobBase.java:445)
+	at org.apache.sqoop.manager.SqlManager.exportTable(SqlManager.java:931)
+	at org.apache.sqoop.tool.ExportTool.exportTable(ExportTool.java:80)
+	at org.apache.sqoop.tool.ExportTool.run(ExportTool.java:99)
+	at org.apache.
+
+
+Different scenario - we will have same type of columns but with extra column
+
+create table tempmysql_hive (sno int,myid int,firstname varchar(30),gender varchar(30),city varchar(20));
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive_1 \
+ --input-fields-terminated-by "\001"
+
+It is inserted but extra column has null values.
+
+Let us create a same table with not null type column
+
+create table tempmysql_hive_2 (sno int,myid int,firstname varchar(30),gender varchar(30),city varchar(20) not null);
+
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive_2 \
+ --input-fields-terminated-by "\001"
+
+it FAILED 
+
+
+**** Now let us try  the same scenario with --columns
+
+Create another table by exchanging the columns as below.
+create table tempmysql_hive_demo (firstname varchar(30),gender varchar(30),sno int,myid int);
+--columns in target directory not the source directory
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --columns sno,myid,firstname,gender \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive_demo \
+ --input-fields-terminated-by "\001"
+
+It is working
+
+
+
+******** Store procedure???
+
+
+******* Update the record.
+
+1.Suppose I have table created in mysql with no primary keys, and i run export command twice.The result will be,data will be appended.
+2.What if I have a primary key in the mysql table.The second export run will fail.
+3.To over come this we need to add a control argument --update-key
+
+So,
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive \
+ --input-fields-terminated-by "\001"
+
+
+create table tempmysql_hive (sno int primary key,myid int,firstname varchar(30),gender varchar(30));
+Now to run second time for update,
+
+we will set the gender to null in mysql table nd run the below query,
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --update-key sno \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive \
+ --input-fields-terminated-by "\001"
+
+
+It is updated but will not insert new records.To do that we need to add --update-mode allowinsert
+BY default ,the update mode is updateonly
+
+So ,
+
+sqoop export \
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --update-key sno \
+ --update-mode allowinsert \
+ --export-dir /user/hive/warehouse/temphivetable.db/temphive \
+ --table tempmysql_hive \
+ --input-fields-terminated-by "\001"
+
+***** Staging table *******
+
+Staging table acts as an auxiliary table that is used to stage exported data.
+
+Since Sqoop breaks down export process into multiple transactions, it is possible that a failed export job may result in partial data being committed to the database. This can further lead to subsequent jobs failing due to insert collisions in some cases, or lead to duplicated data in others.
+
+You can overcome this problem by specifying a staging table via the --staging-table option which acts as an auxiliary table that is used to stage exported data. The staged data is finally moved to the destination table in a single transaction.
+
+In order to use the staging facility, you must create the staging table prior to running the export job. This table must be structurally identical to the target table. This table should either be empty before the export job runs, or the --clear-staging-table option must be specified. If the staging table contains data and the --clear-staging-table option is specified, Sqoop will delete all of the data before starting the export job.
+
+
+*** this will have accurate data in target table.If job fails,,nothing will be exported.
+*** this will ensure our target table is in consistent stage.Either failure or success.No partial data.
+
