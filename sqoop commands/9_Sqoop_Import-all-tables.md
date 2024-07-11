@@ -65,7 +65,7 @@ In this case we need to use `autoreset-to-one-mapper` which will sure it execute
  --autoreset-to-one-mapper
 ```
 
-If we want to imports all tables from specified database excluding some table.
+If we want to import all tables from specified database excluding some table.
 
 ```
  sqoop import-all-tables 
