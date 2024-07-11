@@ -56,7 +56,6 @@ Please specify one with --split-by or perform a sequential import with '-m 1'.
 
 In this case we need to use `autoreset-to-one-mapper` which will sure it executes only one mapper if a table doesn't have a primary key
 
-
 ```
  sqoop import-all-tables \
  --connect "jdbc:mysql://localhost:3306/kundandb" \
@@ -64,5 +63,15 @@ In this case we need to use `autoreset-to-one-mapper` which will sure it execute
  --password root \
  --warehouse-dir /sqoop/alltables/ \
  --autoreset-to-one-mapper
-`` 
+```
+
+If we want to imports all tables from specified database excluding some table.
+
+```
+sqoop import-all-tables 
+--connect jdbc:mysql://localhost:port/demo_db 
+--username sqoop
+--password sqoop
+--exclude-tables   table1,table2,table3
+```
 
