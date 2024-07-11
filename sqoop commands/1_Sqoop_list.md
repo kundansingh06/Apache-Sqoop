@@ -38,17 +38,17 @@ sqoop job --create  myjob \
 # Sqoop show job
 Run below command to show particular job.
 ```
-sqoop job --show    myjob
+sqoop job --show   myjob
 ```
 
 # Sqoop exec job
 Run below command to execute particular job.
 ```
-sqoop job --exec    myjob
+sqoop job --exec   myjob
 ```
 
 # Sqoop delete job
 Run below command to delete particular job.
 ```
-sqoop job --delete	myjob
+sqoop job --delete   myjob
 ```
