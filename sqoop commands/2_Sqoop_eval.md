@@ -19,32 +19,26 @@ sqoop eval \
 *Using --query
 ```
 sqoop eval \
+  --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_export \
+  --username kundan_user \
+  --password kundan@123 \
+  --query "SELECT * FROM dummy_old"
+  
+sqoop eval \
   --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_db \
   --username kundan_user \
   --password kundan@123 \
-  --query "SELECT * FROM order_items LIMIT 10"
-
-sqoop eval \
-  --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_db \
-  --username kundan_user \
-  --password kundan@123 \
-  --query "INSERT INTO orders VALUES (100000, '2017-10-31 00:00:00.0', 100000, 'DUMMY')"
+  --query "SELECT * FROM dummy_old LIMIT 10"
 
 sqoop eval \
   --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_export \
   --username kundan_user \
   --password kundan@123 \
-  --query "CREATE TABLE dummy (i INT)"
+  --query "CREATE TABLE dummy_new (i INT)"
 
 sqoop eval \
   --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_export \
   --username kundan_user \
   --password kundan@123 \
-  --query "INSERT INTO dummy VALUES (1)"
-
-sqoop eval \
-  --connect jdbc:mysql://KUNDAN_IP_ADDRESS:3306/retail_export \
-  --username kundan_user \
-  --password kundan@123 \
-  --query "SELECT * FROM dummy"
+  --query "INSERT INTO dummy_new VALUES (1)"
 ```
