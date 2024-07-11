@@ -52,22 +52,12 @@ password : hduser
 mysql-connector placed in /usr/local/sqoop**/lib/*
 Exported Hadoop home and Hadoop mapred path in /usr/local/sqoop**/coonf/spark-env.sh/
 
-
-Sqoop commands
-
+*************Sqoop commands*************
 ----- To list databases -----
 sqoop list-databases \
   --connect "jdbc:mysql://localhost:3306" \
   --username root \
   --password root
-
------ Impport from mysql database to HDFS -----
-sqoop import \
-  --connect "jdbc:mysql://localhost:3306/kundandb" \
-  --username=root \
-  --password=root \
-  --table emptable \
-  --target-dir=/sqoop/emptable_1
 
 ----- list table -----
 sqoop list-tables \
@@ -81,11 +71,8 @@ sqoop-eval \
   --username root \
   --password root \
   --query "select * from kundandb.emptable"
-  OR WE CAN
+     OR WE CAN
   --query "select * from emptable"
-  OR WE CAN
-  --query "INSERT INTO emptable values (13,'ajith','k',null)"
-
 
 -- create table ----
 sqoop-eval \
@@ -101,14 +88,17 @@ sqoop-eval \
   --password root \
   --query "INSERT INTO dummy VALUES (1)"
 
-sqoop-eval \
-  --connect "jdbc:mysql://localhost:3306"/kundandb \
-  --username root \
-  --password root \
-  --query "SELECT * FROM dummy"
+
+
+*************Sqoop import*************
+sqoop import \
+  --connect "jdbc:mysql://localhost:3306/kundandb" \
+  --username=root \
+  --password=root \
+  --table emptable \
+  --target-dir /sqoop/emptable_1
 
 -- Sqoop Import ---
-
 sqoop import \
   --connect "jdbc:mysql://localhost:3306/kundandb" \
   --username root \
@@ -945,8 +935,6 @@ sqoop list-tables \
 
 
 *********** Sqoop Export *******
-
-
 Sqoop export always uses HDFS.It doesnt know hive or anything else..It always reads the HDFS for importing into mysql.
 
 Having said that,If we create a table with several joins in hive.We can verify the hdfs localtion of the table by querying describe-formatted- which will list the hdfs location.
@@ -1113,7 +1101,6 @@ sqoop export \
  --input-fields-terminated-by "\001"
 
 ***** Staging table *******
-
 Staging table acts as an auxiliary table that is used to stage exported data.
 
 Since Sqoop breaks down export process into multiple transactions, it is possible that a failed export job may result in partial data being committed to the database. This can further lead to subsequent jobs failing due to insert collisions in some cases, or lead to duplicated data in others.

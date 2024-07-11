@@ -1,14 +1,12 @@
 # Filtering
 
 Below are different ways for applying filtering while sqoop import.
-
-	1. Using Boundary queries
+	
+    1. Using Boundary queries
 	2. Specifying columns.
 	3. Using query
-	
 
 ## Boundary-query
-
 While doing sqoop import,sqoop splits the data based on number of mappers.As you know,4 is the defaut number of mappers and hence,there will 4 splits of data.How does sqoop split the data?.The answer is ,`sqoop generates a boundary query on its own` and split the data into 4 mutual exclusive subset.
 
 Let us have a look on the default behaviour.Now I run a simple sqoop import.
@@ -193,10 +191,9 @@ sqoop import \
  --split-by id
 ```
 
-It is still throwin error with even alias.So we need to give t.id
+It is still throwing error with even alias.So we need to give t.id
 
 ### Points to be noted:
-
 	1. table and/or columns are mutualy exclusive
 	2. Either you can only table
 	3. Either you can have both table and column

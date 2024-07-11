@@ -1,5 +1,4 @@
 # Customizing number of mappers.
-
 Internally sqoop imports convert the processing logic or query to `mapr-reduce`.The parallelism of mapr-reduce depends on number of split.By default,the number of input splits is 4 in sqoop import.Hence 4 mappes will be running parallely.
 
 ```
@@ -43,7 +42,7 @@ So only mapper is launched.
 
 The number of mappers which is equal to number of splits will be applied on primary key if exists.
 
-If a table dosn't have primary key and if number of mappers is more than one then the sqoop import execution will fail with below error.
+If a table doesn't have primary key and if number of mappers is more than one then the sqoop import execution will fail with below error.
 
 ```
 Import failed: No primary key could be found for table temp_nopk. Please specify one with --split-by or perform a sequential import with '-m 1'.
@@ -80,9 +79,7 @@ sqoop import \
 
 
 ```
-
 ## Auto reset to one mapper.
-
 `--autoreset-to-one-mapper ` Auto reset to one mapper when no primary key is available..This can be added in the import command and it will check if the table has the primary key,if not it will set the mapped to 1.
 
 ```
