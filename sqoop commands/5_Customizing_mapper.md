@@ -50,11 +50,11 @@ Import failed: No primary key could be found for table temp_nopk. Please specify
 
 `So primary key is mandatory for mappers more than 1.`
 
-So what to do for a table which doesnt have primary key.
+# So what to do for a table which doesnt have primary key.
 
-# Option 1: Set --num-mappers to 1
+Option 1: Set --num-mappers to 1
 
-# Option 2: Use --split-by option
+Option 2: Use --split-by option
 
 ## split-by
 
