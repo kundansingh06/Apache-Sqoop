@@ -104,12 +104,24 @@ sqoop import \
  --connect "jdbc:mysql://localhost:3306/kundandb" \
  --username root \
  --password root \
+ --table emptable \
  --target-dir /sqoop/test_14/ \
  --num-mappers 2 \
- --table emptable \
- --check-column created_date \
  --incremental append \
+ --check-column created_date \
  --last-value '2014-05-06'
+ 
+ 
+sqoop import \
+  --connect jdbc:mysql://localhost:3306/mydb \
+  --username myuser \
+  --password mypass \
+  --table transactions \
+  --target-dir /user/hadoop/transaction_data \
+  --num-mappers 2 \
+  --incremental lastmodified \
+  --check-column last_update_date \
+  --last-value "2013-05-22 01:01:01"
 ```
 
 This will print below,
