@@ -68,10 +68,11 @@ In this case we need to use `autoreset-to-one-mapper` which will sure it execute
 If we want to imports all tables from specified database excluding some table.
 
 ```
-sqoop import-all-tables 
---connect jdbc:mysql://localhost:port/demo_db 
---username sqoop
---password sqoop
---exclude-tables   table1,table2,table3
+ sqoop import-all-tables 
+ --connect "jdbc:mysql://localhost:3306/kundandb" \
+ --username root \
+ --password root \
+ --warehouse-dir /sqoop/alltables/ \
+ --exclude-tables   table1,table2,table3
 ```
 
